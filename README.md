@@ -23,8 +23,8 @@ To set up the project, follow these steps:
 
 2. **Create a virtual environment and activate it:**
    ```bash
-   python -m venv venv
-   source venv/bin/activate
+   python -m venv .venv
+   source .venv/bin/activate
    ```
 
 3. **Install the required packages:**
