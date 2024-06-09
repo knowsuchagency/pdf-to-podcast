@@ -107,6 +107,7 @@ demo = gr.Interface(
     ],
     allow_flagging=False,
     clear_btn=None,
+    head=os.getenv("HEAD"),
 )
 
 demo.launch(
