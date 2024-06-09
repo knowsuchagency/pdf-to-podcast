@@ -6,20 +6,9 @@ from loguru import logger
 from openai import OpenAI
 from promptic import llm
 from pydantic import BaseModel
+from pypdf import PdfReader
 
 
-def get_mp3(text: str, voice: str) -> bytes:
-    client = OpenAI()
-
-    with client.audio.speech.with_streaming_response.create(
-        model="tts-1",
-        voice=voice,
-        input=text,
-    ) as response:
-        with io.BytesIO() as file:
-            for chunk in response.iter_bytes():
-                file.write(chunk)
-            return file.getvalue()
 
 
 class DialogueItem(BaseModel):
@@ -32,7 +21,7 @@ class Dialogue(BaseModel):
     dialogue: List[DialogueItem]
 
 
-@llm(model="gemini/gemini-1.5-pro-latest")
+@llm(model="gemini/gemini-1.5-flash")
 def generate_dialogue(text: str) -> Dialogue:
     """
     Your task is to take the input text provided and turn it into an engaging, informative podcast dialogue. The input text may be messy or unstructured, as it could come from a variety of sources like PDFs or web pages.
@@ -58,8 +47,25 @@ def generate_dialogue(text: str) -> Dialogue:
     Write your engaging, informative podcast dialogue based on the key points and creative ideas you came up with during the brainstorming session. Use a conversational tone and include any necessary context or explanations to make the content accessible to a general audience.
     """
 
+def get_mp3(text: str, voice: str) -> bytes:
+    client = OpenAI()
 
-def generate_audio(text: str) -> bytes:
+    with client.audio.speech.with_streaming_response.create(
+        model="tts-1",
+        voice=voice,
+        input=text,
+    ) as response:
+        with io.BytesIO() as file:
+            for chunk in response.iter_bytes():
+                file.write(chunk)
+            return file.getvalue()
+
+
+def generate_audio(file: bytes) -> bytes:
+
+    # Read the PDF file
+    reader = PdfReader(io.BytesIO(file))
+    text = "\n\n".join([page.extract_text() for page in reader.pages])
 
     llm_output = generate_dialogue(text)
     logger.info(llm_output)
@@ -84,10 +90,14 @@ def generate_audio(text: str) -> bytes:
 demo = gr.Interface(
     fn=generate_audio,
     inputs=[
-        gr.Textbox(
-            label="Input Text",
-            placeholder="Enter text here",
-        ),
+        gr.File(
+            label="Input PDF",
+            type="binary",
+        )
+        # gr.Textbox(
+        #     label="Input Text",
+        #     placeholder="Enter text here",
+        # ),
         # gr.Textbox(
         #     label="Male Voice",
         #     value="1m3E2x7boso3AU9J3woJ",
