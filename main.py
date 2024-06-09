@@ -92,23 +92,24 @@ def generate_audio(file: bytes, openai_api_key: str) -> bytes:
 
 demo = gr.Interface(
     title="PDF to Podcast",
-    description="Convert any PDF document into an engaging podcast episode!",
     fn=generate_audio,
     inputs=[
         gr.File(
-            label="Input PDF",
+            label="PDF",
             type="binary",
         ),
         gr.Textbox(
             label="OpenAI API Key",
-            placeholder="Enter your OpenAI API key here",
         ),
     ],
     outputs=[
         gr.Audio(format="mp3"),
     ],
+    allow_flagging=False,
+    clear_btn=None,
 )
 
 demo.launch(
     show_api=False,
+    
 )
