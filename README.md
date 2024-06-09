@@ -8,7 +8,6 @@ This project provides a tool to convert any PDF document into a podcast episode!
 
 - **Convert PDF to Podcast:** Upload a PDF and convert its content into a podcast dialogue.
 - **Engaging Dialogue:** The generated dialogue is designed to be informative and entertaining.
-- **Multiple Voice Options:** Choose from different voices to narrate the podcast.
 - **User-friendly Interface:** Simple interface using Gradio for easy interaction.
 
 ## Installation
