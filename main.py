@@ -112,5 +112,4 @@ demo = gr.Interface(
 
 demo.launch(
     show_api=False,
-    
 )
