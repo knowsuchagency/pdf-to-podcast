@@ -1,6 +1,7 @@
 import io
 import os
 from typing import List, Literal
+from pathlib import Path
 
 import gradio as gr
 from loguru import logger
@@ -78,12 +79,12 @@ def get_mp3(text: str, voice: str, api_key: str = None) -> bytes:
             return file.getvalue()
 
 
-def generate_audio(file: bytes, openai_api_key: str = None) -> bytes:
+def generate_audio(file: str, openai_api_key: str = None) -> bytes:
 
     if not os.getenv("OPENAI_API_KEY", openai_api_key):
         raise gr.Error("OpenAI API key is required")
 
-    reader = PdfReader(io.BytesIO(file))
+    reader = PdfReader(Path(file).open("rb"))
     text = "\n\n".join([page.extract_text() for page in reader.pages])
 
     llm_output = generate_dialogue(text)
@@ -108,6 +109,7 @@ def generate_audio(file: bytes, openai_api_key: str = None) -> bytes:
 
     return audio, transcript
 
+
 description = """
 <p style="text-align:center">
   <strong>Convert any PDF into a podcast episode! Experience research papers, websites, and more in a whole new way.</strong>
@@ -118,10 +120,11 @@ demo = gr.Interface(
     title="PDF to Podcast",
     description=description,
     fn=generate_audio,
+    examples=[[p.__fspath__()] for p in Path("examples").glob("*.pdf")],
     inputs=[
         gr.File(
             label="PDF",
-            type="binary",
+            # type="binary",
         ),
         gr.Textbox(
             label="OpenAI API Key",
@@ -135,6 +138,8 @@ demo = gr.Interface(
     allow_flagging=False,
     clear_btn=None,
     head=os.getenv("HEAD"),
+    concurrency_limit=20,
+    cache_examples="lazy",
 )
 
 demo.launch(
