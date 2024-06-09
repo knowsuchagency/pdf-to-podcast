@@ -65,6 +65,9 @@ def get_mp3(text: str, voice: str, api_key: str = None) -> bytes:
 
 def generate_audio(file: bytes, openai_api_key: str) -> bytes:
 
+    if not os.getenv("OPENAI_API_KEY", openai_api_key):
+        raise gr.Error("OpenAI API key is required")
+
     reader = PdfReader(io.BytesIO(file))
     text = "\n\n".join([page.extract_text() for page in reader.pages])
 
