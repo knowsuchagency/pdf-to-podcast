@@ -1,4 +1,4 @@
-# PDF to Podcast Converter
+# PDF to Podcast
 
 ## Overview
 
