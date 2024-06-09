@@ -88,19 +88,25 @@ def generate_audio(file: bytes, openai_api_key: str = None) -> bytes:
 
     llm_output = generate_dialogue(text)
 
-    result = b""
+    audio = b""
+    transcript = ""
+
     characters = 0
 
     for line in llm_output.dialogue:
-        logger.info(f"{line.speaker}: {line.text}")
+        transcript_line = f"{line.speaker}: {line.text}"
 
-        audio = get_mp3(line.text, line.voice, openai_api_key)
-        result += audio
+        logger.info(transcript_line)
+
+        audio_chunk = get_mp3(line.text, line.voice, openai_api_key)
+
+        audio += audio_chunk
         characters += len(line.text)
+        transcript += transcript_line + "\n\n"
 
     logger.info(f"Generated {characters} characters of audio")
 
-    return result
+    return audio, transcript
 
 
 demo = gr.Interface(
@@ -117,7 +123,8 @@ demo = gr.Interface(
         ),
     ],
     outputs=[
-        gr.Audio(format="mp3"),
+        gr.Audio(label="Audio", format="mp3"),
+        gr.Textbox(label="Transcript"),
     ],
     allow_flagging=False,
     clear_btn=None,
