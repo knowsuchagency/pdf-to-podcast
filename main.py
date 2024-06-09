@@ -1,4 +1,5 @@
 import io
+import os
 from typing import List, Literal
 
 import gradio as gr
@@ -7,8 +8,6 @@ from openai import OpenAI
 from promptic import llm
 from pydantic import BaseModel
 from pypdf import PdfReader
-
-
 
 
 class DialogueItem(BaseModel):
@@ -47,8 +46,11 @@ def generate_dialogue(text: str) -> Dialogue:
     Write your engaging, informative podcast dialogue based on the key points and creative ideas you came up with during the brainstorming session. Use a conversational tone and include any necessary context or explanations to make the content accessible to a general audience.
     """
 
-def get_mp3(text: str, voice: str) -> bytes:
-    client = OpenAI()
+
+def get_mp3(text: str, voice: str, api_key: str = None) -> bytes:
+    client = OpenAI(
+        api_key=api_key or os.getenv("OPENAI_API_KEY"),
+    )
 
     with client.audio.speech.with_streaming_response.create(
         model="tts-1",
@@ -61,9 +63,8 @@ def get_mp3(text: str, voice: str) -> bytes:
             return file.getvalue()
 
 
-def generate_audio(file: bytes) -> bytes:
+def generate_audio(file: bytes, openai_api_key: str) -> bytes:
 
-    # Read the PDF file
     reader = PdfReader(io.BytesIO(file))
     text = "\n\n".join([page.extract_text() for page in reader.pages])
 
@@ -73,12 +74,11 @@ def generate_audio(file: bytes) -> bytes:
     result = b""
     characters = 0
 
-    # Generate and play the dialogue
     for line in llm_output.dialogue:
         logger.info(line.text)
         logger.info(line.voice)
 
-        audio = get_mp3(line.text, line.voice)
+        audio = get_mp3(line.text, line.voice, openai_api_key)
         result += audio
         characters += len(line.text)
 
@@ -88,28 +88,24 @@ def generate_audio(file: bytes) -> bytes:
 
 
 demo = gr.Interface(
+    title="PDF to Podcast",
+    description="Convert any PDF document into an engaging podcast episode!",
     fn=generate_audio,
     inputs=[
         gr.File(
             label="Input PDF",
             type="binary",
-        )
-        # gr.Textbox(
-        #     label="Input Text",
-        #     placeholder="Enter text here",
-        # ),
-        # gr.Textbox(
-        #     label="Male Voice",
-        #     value="1m3E2x7boso3AU9J3woJ",
-        # ),
-        # gr.Textbox(
-        #     label="Female Voice",
-        #     value="uCGnCVg8g9Lwl9wocoHE",
-        # ),
+        ),
+        gr.Textbox(
+            label="OpenAI API Key",
+            placeholder="Enter your OpenAI API key here",
+        ),
     ],
     outputs=[
         gr.Audio(format="mp3"),
     ],
 )
 
-demo.launch()
+demo.launch(
+    show_api=False,
+)

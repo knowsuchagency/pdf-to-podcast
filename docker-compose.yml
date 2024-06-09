@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:7860"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    
