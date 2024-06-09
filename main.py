@@ -8,6 +8,8 @@ from openai import OpenAI
 from promptic import llm
 from pydantic import BaseModel
 from pypdf import PdfReader
+from tenacity import retry, retry_if_exception_type
+from pydantic import ValidationError
 
 
 class DialogueItem(BaseModel):
@@ -28,6 +30,7 @@ class Dialogue(BaseModel):
     dialogue: List[DialogueItem]
 
 
+@retry(retry=retry_if_exception_type(ValidationError))
 @llm(model="gemini/gemini-1.5-flash")
 def generate_dialogue(text: str) -> Dialogue:
     """
