@@ -84,8 +84,9 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
     if not os.getenv("OPENAI_API_KEY", openai_api_key):
         raise gr.Error("OpenAI API key is required")
 
-    reader = PdfReader(Path(file).open("rb"))
-    text = "\n\n".join([page.extract_text() for page in reader.pages])
+    with Path(file).open("rb") as f:
+        reader = PdfReader(f)
+        text = "\n\n".join([page.extract_text() for page in reader.pages])
 
     llm_output = generate_dialogue(text)
 
