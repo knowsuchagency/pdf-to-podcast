@@ -127,7 +127,6 @@ demo = gr.Interface(
     inputs=[
         gr.File(
             label="PDF",
-            # type="binary",
         ),
         gr.Textbox(
             label="OpenAI API Key",
