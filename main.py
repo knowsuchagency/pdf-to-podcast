@@ -1,44 +1,105 @@
-from elevenlabs.client import ElevenLabs
+import io
+from typing import List, Literal
+
 import gradio as gr
-import os
-from elevenlabs import play
+from loguru import logger
+from openai import OpenAI
+from promptic import llm
+from pydantic import BaseModel
 
-client = ElevenLabs(
-#   api_key="YOUR_API_KEY", # Defaults to ELEVEN_API_KEY
-)
 
-female_voice = "nDJIICjR9zfJExIFeSCN"
-male_voice = "1m3E2x7boso3AU9J3woJ"
+def get_mp3(text: str, voice: str) -> bytes:
+    client = OpenAI()
 
-def talk():
+    with client.audio.speech.with_streaming_response.create(
+        model="tts-1",
+        voice=voice,
+        input=text,
+    ) as response:
+        with io.BytesIO() as file:
+            for chunk in response.iter_bytes():
+                file.write(chunk)
+            return file.getvalue()
 
-    # Define the dialogue text and assign different voices
-    dialogue = [
-        {"text": "Hello! How are you today?", "voice": female_voice},
-        {"text": "I'm doing well, thank you! How about you?", "voice": male_voice},
-        {"text": "I'm great, thanks for asking!", "voice": female_voice},
-    ]
+
+class DialogueItem(BaseModel):
+    text: str
+    voice: Literal["alloy", "onyx", "fable"]
+
+
+class Dialogue(BaseModel):
+    scratchpad: str
+    dialogue: List[DialogueItem]
+
+
+@llm(model="gemini/gemini-1.5-pro-latest")
+def generate_dialogue(text: str) -> Dialogue:
+    """
+    Your task is to take the input text provided and turn it into an engaging, informative podcast dialogue. The input text may be messy or unstructured, as it could come from a variety of sources like PDFs or web pages.
+
+    Here is the input text you will be working with:
+
+    ```
+    {text}
+    ```
+
+    First, carefully read through the input text and identify the main topics, key points, and any interesting facts or anecdotes. Think about how you could present this information in a fun, engaging way that would be suitable for an audio podcast.
+
+    Brainstorm creative ways to discuss the main topics and key points you identified in the input text. Consider using analogies, storytelling techniques, or hypothetical scenarios to make the content more relatable and engaging for listeners.
+
+    Keep in mind that your podcast should be accessible to a general audience, so avoid using too much jargon or assuming prior knowledge of the topic. If necessary, think of ways to briefly explain any complex concepts in simple terms.
+
+    Use your imagination to fill in any gaps in the input text or to come up with thought-provoking questions that could be explored in the podcast. The goal is to create an informative and entertaining dialogue, so feel free to be creative in your approach.
+
+    Write your brainstorming ideas and a rough outline for the podcast dialogue in a scratchpad.
+
+    Now that you have brainstormed ideas and created a rough outline, it's time to write the actual podcast dialogue. Aim for a natural, conversational flow between the host and any guest speakers. Incorporate the best ideas from your brainstorming session and make sure to explain any complex topics in an easy-to-understand way.
+
+    Write your engaging, informative podcast dialogue based on the key points and creative ideas you came up with during the brainstorming session. Use a conversational tone and include any necessary context or explanations to make the content accessible to a general audience.
+    """
+
+
+def generate_audio(text: str) -> bytes:
+
+    llm_output = generate_dialogue(text)
+    logger.info(llm_output)
+
+    result = b""
+    characters = 0
 
     # Generate and play the dialogue
-    for line in dialogue:
-        audio = client.generate(
-            text=line["text"],
-            voice=line["voice"],
-            model="eleven_monolingual_v1",
-        )
-        # play(audio)
-        yield audio
+    for line in llm_output.dialogue:
+        logger.info(line.text)
+        logger.info(line.voice)
 
-def speak():
-    clips = [b"".join(audio) for audio in talk()]
-    return b"".join(clips)
+        audio = get_mp3(line.text, line.voice)
+        result += audio
+        characters += len(line.text)
 
-def get_interface():
-    with gr.Blocks() as blocks:
-        gr.Audio(value=speak)
-    return blocks
+    logger.info(f"Generated {characters} characters of audio")
+
+    return result
 
 
-if __name__ == '__main__':
-    demo = get_interface()
-    demo.launch()
+demo = gr.Interface(
+    fn=generate_audio,
+    inputs=[
+        gr.Textbox(
+            label="Input Text",
+            placeholder="Enter text here",
+        ),
+        # gr.Textbox(
+        #     label="Male Voice",
+        #     value="1m3E2x7boso3AU9J3woJ",
+        # ),
+        # gr.Textbox(
+        #     label="Female Voice",
+        #     value="uCGnCVg8g9Lwl9wocoHE",
+        # ),
+    ],
+    outputs=[
+        gr.Audio(format="mp3"),
+    ],
+)
+
+demo.launch()

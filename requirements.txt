@@ -1,2 +1,5 @@
-gradio
-elevenlabs
+gradio~=4.36
+promptic==0.7.3
+pydantic~=2.7
+google-generativeai~=0.6
+loguru~=0.7
