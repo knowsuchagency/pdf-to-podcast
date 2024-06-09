@@ -84,7 +84,6 @@ def generate_audio(file: bytes, openai_api_key: str = None) -> bytes:
     text = "\n\n".join([page.extract_text() for page in reader.pages])
 
     llm_output = generate_dialogue(text)
-    logger.info(llm_output)
 
     result = b""
     characters = 0
