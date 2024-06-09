@@ -108,9 +108,15 @@ def generate_audio(file: bytes, openai_api_key: str = None) -> bytes:
 
     return audio, transcript
 
+description = """
+<p style="text-align:center">
+  <strong>Convert any PDF into a podcast episode! Experience research papers, websites, and more in a whole new way.</strong>
+</p>
+"""
 
 demo = gr.Interface(
     title="PDF to Podcast",
+    description=description,
     fn=generate_audio,
     inputs=[
         gr.File(
