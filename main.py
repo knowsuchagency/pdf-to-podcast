@@ -1,16 +1,16 @@
+import concurrent.futures as cf
 import io
 import os
-from typing import List, Literal
 from pathlib import Path
+from typing import List, Literal
 
 import gradio as gr
 from loguru import logger
 from openai import OpenAI
 from promptic import llm
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from pypdf import PdfReader
 from tenacity import retry, retry_if_exception_type
-from pydantic import ValidationError
 
 
 class DialogueItem(BaseModel):
@@ -95,16 +95,19 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
 
     characters = 0
 
-    for line in llm_output.dialogue:
-        transcript_line = f"{line.speaker}: {line.text}"
+    with cf.ThreadPoolExecutor() as executor:
+        futures = []
+        for line in llm_output.dialogue:
+            transcript_line = f"{line.speaker}: {line.text}"
+            logger.info(transcript_line)
+            future = executor.submit(get_mp3, line.text, line.voice, openai_api_key)
+            futures.append((future, transcript_line))
+            characters += len(line.text)
 
-        logger.info(transcript_line)
-
-        audio_chunk = get_mp3(line.text, line.voice, openai_api_key)
-
-        audio += audio_chunk
-        characters += len(line.text)
-        transcript += transcript_line + "\n\n"
+        for future, transcript_line in futures:
+            audio_chunk = future.result()
+            audio += audio_chunk
+            transcript += transcript_line + "\n\n"
 
     logger.info(f"Generated {characters} characters of audio")
 
