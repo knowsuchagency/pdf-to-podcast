@@ -5,3 +5,4 @@ google-generativeai~=0.6
 loguru~=0.7
 pypdf~=4.1
 tenacity~=8.3
+sentry-sdk~=2.5

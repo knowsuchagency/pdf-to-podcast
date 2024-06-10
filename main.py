@@ -5,12 +5,15 @@ from pathlib import Path
 from typing import List, Literal
 
 import gradio as gr
+import sentry_sdk
 from loguru import logger
 from openai import OpenAI
 from promptic import llm
 from pydantic import BaseModel, ValidationError
 from pypdf import PdfReader
 from tenacity import retry, retry_if_exception_type
+
+sentry_sdk.init(os.getenv("SENTRY_DSN"))
 
 
 class DialogueItem(BaseModel):
