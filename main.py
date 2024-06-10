@@ -126,7 +126,7 @@ demo = gr.Interface(
     title="PDF to Podcast",
     description=description,
     fn=generate_audio,
-    examples=[[p.__fspath__()] for p in Path("examples").glob("*.pdf")],
+    examples=[[str(p)] for p in Path("examples").glob("*.pdf")],
     inputs=[
         gr.File(
             label="PDF",
