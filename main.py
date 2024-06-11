@@ -168,10 +168,13 @@ demo = gr.Interface(
     allow_flagging=False,
     clear_btn=None,
     head=os.getenv("HEAD"),
-    concurrency_limit=20,
     cache_examples="lazy",
 )
 
-demo.launch(
+
+demo.queue(
+    max_size=20,
+    default_concurrency_limit=20,
+).launch(
     show_api=False,
 )
