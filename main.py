@@ -12,6 +12,10 @@ from promptic import llm
 from pydantic import BaseModel, ValidationError
 from pypdf import PdfReader
 from tenacity import retry, retry_if_exception_type
+from tempfile import NamedTemporaryFile
+import glob
+import os
+import time
 
 sentry_sdk.init(os.getenv("SENTRY_DSN"))
 
@@ -61,7 +65,7 @@ def generate_dialogue(text: str) -> Dialogue:
     Now that you have brainstormed ideas and created a rough outline, it's time to write the actual podcast dialogue. Aim for a natural, conversational flow between the host and any guest speakers. Incorporate the best ideas from your brainstorming session and make sure to explain any complex topics in an easy-to-understand way.
 
     <podcast_dialogue>
-    Write your engaging, informative podcast dialogue here, based on the key points and creative ideas you came up with during the brainstorming session. Use a conversational tone and include any necessary context or explanations to make the content accessible to a general audience. Rather than adding variable brackets like `[Host Name]` or `[Guest Name]`, use made-up names for the host and any guest speakers to create a more engaging and immersive experience for listeners as your output will be used to generate audio.
+    Write your engaging, informative podcast dialogue here, based on the key points and creative ideas you came up with during the brainstorming session. Use a conversational tone and include any necessary context or explanations to make the content accessible to a general audience. Don't include variable brackets like `[Host Name]` or `[Guest Name]`. Use made-up names for the hosts and guests to create a more engaging and immersive experience for listeners. Design your output to be read aloud -- it will be directly converted into audio.
     </podcast_dialogue>
     """
 
@@ -102,7 +106,6 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
         futures = []
         for line in llm_output.dialogue:
             transcript_line = f"{line.speaker}: {line.text}"
-            logger.info(transcript_line)
             future = executor.submit(get_mp3, line.text, line.voice, openai_api_key)
             futures.append((future, transcript_line))
             characters += len(line.text)
@@ -114,7 +117,23 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
 
     logger.info(f"Generated {characters} characters of audio")
 
-    return audio, transcript
+    temporary_directory = "./gradio_cached_examples/tmp/"
+    os.makedirs(temporary_directory, exist_ok=True)
+
+    temporary_file = NamedTemporaryFile(
+        dir=temporary_directory,
+        delete=False,
+        suffix=".mp3",
+    )
+    temporary_file.write(audio)
+    temporary_file.close()
+
+    # Delete any files in the temp directory that end with .mp3 and are over a day old
+    for file in glob.glob(f"{temporary_directory}*.mp3"):
+        if os.path.isfile(file) and time.time() - os.path.getmtime(file) > 24 * 60 * 60:
+            os.remove(file)
+
+    return temporary_file.name, transcript
 
 
 description = """
@@ -122,8 +141,6 @@ description = """
   <strong>Convert any PDF into a podcast episode! Experience research papers, websites, and more in a whole new way.</strong>
   <br>
   <a href="https://github.com/knowsuchagency/pdf-to-podcast">knowsuchagency/pdf-to-podcast</a>
-  <br>
-  <em>Note: audio doesn't work in Safari</em>
 </p>
 """
 
