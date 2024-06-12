@@ -9,6 +9,8 @@ from typing import List, Literal
 
 import gradio as gr
 import sentry_sdk
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from openai import OpenAI
 from promptic import llm
@@ -16,7 +18,13 @@ from pydantic import BaseModel, ValidationError
 from pypdf import PdfReader
 from tenacity import retry, retry_if_exception_type
 
+from constants import description, head
+
 sentry_sdk.init(os.getenv("SENTRY_DSN"))
+
+app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class DialogueItem(BaseModel):
@@ -46,13 +54,13 @@ def generate_dialogue(text: str) -> Dialogue:
     Here is the input text you will be working with:
 
     <input_text>
-    {text}  
+    {text}
     </input_text>
 
     First, carefully read through the input text and identify the main topics, key points, and any interesting facts or anecdotes. Think about how you could present this information in a fun, engaging way that would be suitable for an audio podcast.
 
     <scratchpad>
-    Brainstorm creative ways to discuss the main topics and key points you identified in the input text. Consider using analogies, storytelling techniques, or hypothetical scenarios to make the content more relatable and engaging for listeners. 
+    Brainstorm creative ways to discuss the main topics and key points you identified in the input text. Consider using analogies, storytelling techniques, or hypothetical scenarios to make the content more relatable and engaging for listeners.
 
     Keep in mind that your podcast should be accessible to a general audience, so avoid using too much jargon or assuming prior knowledge of the topic. If necessary, think of ways to briefly explain any complex concepts in simple terms.
 
@@ -61,7 +69,7 @@ def generate_dialogue(text: str) -> Dialogue:
     Write your brainstorming ideas and a rough outline for the podcast dialogue here. Be sure to note the key insights and takeaways you want to reiterate at the end.
     </scratchpad>
 
-    Now that you have brainstormed ideas and created a rough outline, it's time to write the actual podcast dialogue. Aim for a natural, conversational flow between the host and any guest speakers. Incorporate the best ideas from your brainstorming session and make sure to explain any complex topics in an easy-to-understand way. 
+    Now that you have brainstormed ideas and created a rough outline, it's time to write the actual podcast dialogue. Aim for a natural, conversational flow between the host and any guest speakers. Incorporate the best ideas from your brainstorming session and make sure to explain any complex topics in an easy-to-understand way.
 
     <podcast_dialogue>
     Write your engaging, informative podcast dialogue here, based on the key points and creative ideas you came up with during the brainstorming session. Use a conversational tone and include any necessary context or explanations to make the content accessible to a general audience. Use made-up names for the hosts and guests to create a more engaging and immersive experience for listeners. Do not include any bracketed placeholders like [Host] or [Guest]. Design your output to be read aloud -- it will be directly converted into audio.
@@ -139,14 +147,6 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
     return temporary_file.name, transcript
 
 
-description = """
-<p style="text-align:center">
-  <strong>Convert any PDF into a podcast episode! Experience research papers, websites, and more in a whole new way.</strong>
-  <br>
-  <a href="https://github.com/knowsuchagency/pdf-to-podcast">knowsuchagency/pdf-to-podcast</a>
-</p>
-"""
-
 demo = gr.Interface(
     title="PDF to Podcast",
     description=description,
@@ -167,14 +167,18 @@ demo = gr.Interface(
     ],
     allow_flagging=False,
     clear_btn=None,
-    head=os.getenv("HEAD"),
+    head=os.getenv("HEAD", "") + head,
     cache_examples="lazy",
+    api_name=False,
 )
 
 
-demo.queue(
+demo = demo.queue(
     max_size=20,
     default_concurrency_limit=20,
-).launch(
-    show_api=False,
 )
+
+app = gr.mount_gradio_app(app, demo, path="/")
+
+if __name__ == "__main__":
+    demo.launch(show_api=False)
