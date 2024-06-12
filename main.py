@@ -18,7 +18,6 @@ from pydantic import BaseModel, ValidationError
 from pypdf import PdfReader
 from tenacity import retry, retry_if_exception_type
 
-from constants import description, head
 
 sentry_sdk.init(os.getenv("SENTRY_DSN"))
 
@@ -150,7 +149,7 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
 
 demo = gr.Interface(
     title="PDF to Podcast",
-    description=description,
+    description=Path("description.md").read_text(),
     fn=generate_audio,
     examples=[[str(p)] for p in Path("examples").glob("*.pdf")],
     inputs=[
@@ -168,7 +167,7 @@ demo = gr.Interface(
     ],
     allow_flagging=False,
     clear_btn=None,
-    head=os.getenv("HEAD", "") + head,
+    head=os.getenv("HEAD", "") + Path("head.html").read_text(),
     cache_examples="lazy",
     api_name=False,
 )
