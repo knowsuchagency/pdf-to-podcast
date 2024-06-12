@@ -131,6 +131,7 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
     temporary_directory = "./gradio_cached_examples/tmp/"
     os.makedirs(temporary_directory, exist_ok=True)
 
+    # we use a temporary file because Gradio's audio component doesn't work with raw bytes in Safari
     temporary_file = NamedTemporaryFile(
         dir=temporary_directory,
         delete=False,
