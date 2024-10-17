@@ -2,7 +2,13 @@ services:
   web:
     build: .
     ports:
-      - "8080:8080"
+      - "8000:8000"
     environment:
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-    
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      PROMPTIC_DEBUG: ${PROMPTIC_DEBUG}
+    volumes:
+      - gradio_cache:/app/.gradio/gradio_cached_examples
+
+volumes:
+  gradio_cache:
