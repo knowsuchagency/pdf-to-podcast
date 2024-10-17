@@ -19,7 +19,8 @@ from pypdf import PdfReader
 from tenacity import retry, retry_if_exception_type
 
 
-sentry_sdk.init(os.getenv("SENTRY_DSN"))
+if sentry_dsn := os.getenv("SENTRY_DSN"):
+    sentry_sdk.init(sentry_dsn)
 
 app = FastAPI()
 
