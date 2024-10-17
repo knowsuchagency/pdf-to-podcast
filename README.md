@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project provides a tool to convert any PDF document into a podcast episode! Using OpenAI's text-to-speech models and Google Gemini, this tool processes the content of a PDF, generates a natural dialogue suitable for an audio podcast, and outputs it as an MP3 file.
+This project provides a tool to convert any PDF document into a podcast episode! Using OpenAI's LLM and text-to-speech models, this tool processes the content of a PDF, generates a natural dialogue suitable for an audio podcast, and outputs it as an MP3 file.
 
 ## Features
 
@@ -20,25 +20,16 @@ To set up the project, follow these steps:
    cd pdf-to-podcast
    ```
 
-2. **Create a virtual environment and activate it:**
+2. **Install dependencies:**
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. **Install the required packages:**
-   ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
 ## Usage
 
 1. **Set up API Key(s):**
-   Ensure you have an Google Gemini API key. You can get yours at https://aistudio.google.com/app/apikey.
-   Use it as the value to `GEMINI_API_KEY`.
-   You'll also need an api key for OpenAI which you can either pass through the interface or set as the `OPENAI_API_KEY` environment variable.
 
-   Gemini flash is used as the LLM and OpenAI is used for text-to-speech.
+   You'll need an api key for OpenAI which you can either pass through the interface or set as the `OPENAI_API_KEY` environment variable.
 
 2. **Run the application:**
    ```bash
