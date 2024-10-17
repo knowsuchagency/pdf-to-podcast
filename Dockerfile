@@ -9,4 +9,4 @@ RUN uv sync
 
 COPY . .
 
-CMD uv run granian --interface asgi --port 8000 --host 0.0.0.0  main:app
+CMD uv run uvicorn --host 0.0.0.0 --port 8000 main:app
