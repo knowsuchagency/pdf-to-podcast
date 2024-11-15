@@ -63,7 +63,7 @@ def get_mp3(text: str, voice: str, api_key: str = None) -> bytes:
 
 def generate_audio(file: str, openai_api_key: str = None) -> bytes:
 
-    if not os.getenv("OPENAI_API_KEY", openai_api_key):
+    if not (os.getenv("OPENAI_API_KEY") or openai_api_key):
         raise gr.Error("OpenAI API key is required")
 
     with Path(file).open("rb") as f:
@@ -72,7 +72,7 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
 
     @retry(retry=retry_if_exception_type(ValidationError))
     @llm(
-        model="gpt-4o-mini",
+        model="gemini/gemini-1.5-flash-002",
     )
     def generate_dialogue(text: str) -> Dialogue:
         """

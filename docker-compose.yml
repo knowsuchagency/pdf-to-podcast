@@ -7,8 +7,11 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       SENTRY_DSN: ${SENTRY_DSN}
       PROMPTIC_DEBUG: ${PROMPTIC_DEBUG}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     volumes:
-      - gradio:/app/.gradio
+      - pdf_to_podcast_gradio:/app/.gradio
+      - pdf_to_podcast_gradio_cache:/app/gradio_cached_examples
 
 volumes:
-  gradio:
+  pdf_to_podcast_gradio:
+  pdf_to_podcast_gradio_cache:
