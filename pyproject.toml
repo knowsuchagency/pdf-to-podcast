@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "google-generativeai>=0.8.3",
-    "gradio>=5.1.0",
+    "gradio>=5.5.0",
     "loguru>=0.7.2",
     "promptic>=0.7.7",
     "pydantic>=2.9.2",
