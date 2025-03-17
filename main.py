@@ -73,6 +73,7 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
     @retry(retry=retry_if_exception_type(ValidationError))
     @llm(
         model="gpt-4o",
+        api_key=openai_api_key or os.getenv("OPENAI_API_KEY"),
     )
     def generate_dialogue(text: str) -> Dialogue:
         """
@@ -151,6 +152,7 @@ def generate_audio(file: str, openai_api_key: str = None) -> bytes:
 
 demo = gr.Interface(
     title="PDF to Podcast",
+    theme="origin",
     description=Path("description.md").read_text(),
     fn=generate_audio,
     examples=[[str(p)] for p in Path("examples").glob("*.pdf")],
